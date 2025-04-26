@@ -1,4 +1,4 @@
-// src/app/checkout/[id]/mpesa-payment-success/page.tsx
+//app/checkout/[id]/mpesa-payment-success/page.tsx
 
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
