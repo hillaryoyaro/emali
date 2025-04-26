@@ -1,3 +1,5 @@
+// lib/payments/mpesa/stkPush.ts
+
 import { getMpesaAccessToken } from './safaricom'
 
 type STKParams = {
@@ -6,7 +8,7 @@ type STKParams = {
   amount: number
 }
 
-export async function initiateStkPush({ phoneNumber, amount }: STKParams) {
+export async function initiateStkPush({ phoneNumber, amount, orderId }: STKParams) {
   const token = await getMpesaAccessToken()
 
   const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14)
@@ -24,19 +26,24 @@ export async function initiateStkPush({ phoneNumber, amount }: STKParams) {
     PartyB: shortcode,
     PhoneNumber: phoneNumber,
     CallBackURL: `${process.env.NEXT_PUBLIC_BASE_URL}/api/mpesa/callback`,
-    AccountReference: 'TestAccount',
-    TransactionDesc: 'Test Payment',
+    AccountReference: orderId,
+    TransactionDesc: 'Payment for Order',
   }
 
-  const response = await fetch('https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  })
+  try {
+    const response = await fetch('https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
 
-  const result = await response.json()
-  return result
+    const result = await response.json()
+    return result
+  } catch (error) {
+    console.error('STK Push Error:', error)
+    throw new Error('Failed to initiate STK Push')
+  }
 }
