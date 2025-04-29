@@ -1,27 +1,48 @@
-import { initiateStkPush } from '@/lib/payments/mpesa/stkPush'
-import { connectToDatabase } from '@/lib/db'
-import Order from '@/lib/db/models/order.model' // Adjust based on your file structure
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import { connectToDatabase } from '@/lib/db';
+import { formatError } from '@/lib/utils';
+import Order from '@/lib/db/models/order.model';
+import { createMpesaOrder } from '@/lib/actions/mpesa.actions';
 
-export async function POST(req: Request) {
-  await connectToDatabase()
+export async function POST(req: NextRequest) {
+  try {
+    await connectToDatabase();
+    const session = await auth();
 
-  const body = await req.json()
-  const { phone, amount } = body
+    if (!session) {
+      return NextResponse.json({ success: false, message: 'Not authenticated' }, { status: 401 });
+    }
 
-  // 1. Create Order First
-  const newOrder = await Order.create({
-    amount,
-    phone,
-    status: 'PENDING', // or whatever status you use
-  })
+    const body = await req.json();
+    const { phone, amount } = body;
 
-  // 2. Initiate STK Push with generated Order ID
-  const response = await initiateStkPush({
-    phoneNumber: phone,
-    amount,
-    orderId: newOrder._id.toString(),
-  })
+    if (!phone || !amount) {
+      return NextResponse.json({ success: false, message: 'Phone and amount are required' }, { status: 400 });
+    }
 
-  return NextResponse.json({ response, orderId: newOrder._id })
+    const userId = session.user.id;
+
+    const order = await Order.findOne({
+      'shippingAddress.phone': phone,
+      totalPrice: amount,
+      user: userId,
+      isPaid: false,
+    });
+
+    if (!order) {
+      return NextResponse.json({ success: false, message: 'No matching unpaid order found' }, { status: 404 });
+    }
+
+    const response = await createMpesaOrder(order._id.toString());
+
+    if (!response.success) {
+      return NextResponse.json({ success: false, message: response.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true, data: response.data }, { status: 200 });
+  } catch (error) {
+    console.error('Unexpected server error:', error);
+    return NextResponse.json({ success: false, message: formatError(error) }, { status: 500 });
+  }
 }

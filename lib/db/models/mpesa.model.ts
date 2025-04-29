@@ -12,7 +12,7 @@ export interface IMpesaTransactionInput {
   merchantRequestId?: string
   checkoutRequestId?: string
   user: Types.ObjectId
-  orderId: Types.ObjectId
+  orderId: Types.ObjectId // Refers to the related order
 }
 
 // Extended interface representing a full document
@@ -40,7 +40,7 @@ const mpesaTransactionSchema = new Schema<IMpesaTransaction>(
     orderId: {
       type: Schema.Types.ObjectId,
       ref: 'Order',
-      required: true,
+      required: true, // Ensure that each transaction is associated with an order
     },
   },
   {

@@ -14,7 +14,7 @@ export default function MpesaForm({
   orderId: string
 }) {
   const [phone, setPhone] = useState('')
-  const { loading, success, error, initiateStkPush } = useMpesa()
+  const { loading, success, error, initiateStkPush, transaction } = useMpesa()
   const [message, setMessage] = useState('')
   const router = useRouter()
 
@@ -30,6 +30,11 @@ export default function MpesaForm({
 
     if (success) {
       setMessage('✅ STK Push sent! Check your phone.')
+
+      // After success, you may want to handle the transaction further
+      // For example, save transaction data to your database or show a confirmation
+
+      // Navigate to the success page after a short delay
       setTimeout(() => {
         router.push(`/checkout/${orderId}/mpesa-payment-success`)
       }, 2000)
@@ -73,6 +78,14 @@ export default function MpesaForm({
           </div>
         )}
       </Button>
+
+      {/* Optionally display transaction data */}
+      {transaction && (
+        <div className="mt-4 text-sm text-gray-500">
+          <p>Transaction Details:</p>
+          <pre>{JSON.stringify(transaction, null, 2)}</pre>
+        </div>
+      )}
     </form>
   )
 }

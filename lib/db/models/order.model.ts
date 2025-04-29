@@ -5,6 +5,8 @@ export interface IOrder extends Document, IOrderInput {
   _id: string
   createdAt: Date
   updatedAt: Date
+  mpesaTransactionId?: string // To store the transaction reference from MPesa
+  mpesaPaymentStatus?: string // To store the payment status from MPesa (e.g., 'Pending', 'Completed', etc.)
 }
 
 const orderSchema = new Schema<IOrder>(
@@ -53,6 +55,8 @@ const orderSchema = new Schema<IOrder>(
     paidAt: { type: Date },
     isDelivered: { type: Boolean, required: true, default: false },
     deliveredAt: { type: Date },
+    mpesaTransactionId: { type: String }, // Store the MPesa transaction ID
+    mpesaPaymentStatus: { type: String }, // Store the MPesa payment status
     createdAt: { type: Date, default: Date.now },
   },
   {
