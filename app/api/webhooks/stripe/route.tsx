@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
@@ -5,7 +7,7 @@ import { sendPurchaseReceipt } from '@/emails'
 import Order from '@/lib/db/models/order.model'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2025-03-31.basil', // Make sure this matches your Stripe version
+  apiVersion: '2023-10-16', // Use a valid version
 })
 
 export async function POST(req: NextRequest) {
