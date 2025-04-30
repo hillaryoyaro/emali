@@ -7,7 +7,8 @@ import { redirect } from 'next/navigation'
 import { UserSignUpSchema } from '../validator'
 import { connectToDatabase } from '../db'
 import User from '../db/models/user.model'
-import { formatError } from '../utils'
+import { formatError } from '../utils/utils'
+
 
 // CREATE
 export async function registerUser(userSignUp: IUserSignUp) {

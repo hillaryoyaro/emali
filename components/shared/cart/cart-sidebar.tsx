@@ -1,7 +1,7 @@
 'use client'
 
 import useCartStore from '@/hooks/stores/use-cart-store'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import Link from 'next/link'
 import React, { useState } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'

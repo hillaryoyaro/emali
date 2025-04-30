@@ -14,7 +14,8 @@ import ProductSlider from '@/components/shared/product/product-slider'
 import BrowsingHistoryList from '@/components/shared/common/browsing-history-list'
 import AddToBrowsingHistory from '@/components/shared/product/add-to-browsing-history'
 import AddToCart from '@/components/shared/product/add-to-cart'
-import { generateId, round2 } from '@/lib/utils'
+import { generateId, round2 } from '@/lib/utils/utils'
+
 
 
 export async function generateMetadata(props: {

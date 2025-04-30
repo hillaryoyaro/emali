@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { IOrder } from '@/lib/db/models/order.model'
-import { cn, formatDateTime } from '@/lib/utils'
+import { cn, formatDateTime } from '@/lib/utils/utils'
 import { buttonVariants } from '@/components/ui/button'
 import ProductPrice from '../product/product-price'
 

@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { IProduct } from '@/lib/db/models/product.model'
 
 import Rating from './rating'
-import { formatNumber, generateId, round2 } from '@/lib/utils'
+import { formatNumber, generateId, round2 } from '@/lib/utils/utils'
 import ProductPrice from './product-price'
 
 

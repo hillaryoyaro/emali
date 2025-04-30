@@ -1,3 +1,4 @@
+// --- Mpesa Callback Types ---
 export interface RawMpesaCallback {
   Body: {
     stkCallback: {
@@ -6,11 +7,26 @@ export interface RawMpesaCallback {
       ResultCode: number;
       ResultDesc: string;
       CallbackMetadata?: {
-        Item: {
-          Name: string;
-          Value: string | number;
-        }[];
+        Item: CallbackMetadataItem[];
       };
     };
   };
 }
+
+export interface MpesaCallback {
+  checkoutRequestID: string;
+  mpesaReceiptNumber: string;
+  amount: number;
+  phone: string;
+  transactionDate: string;
+  resultCode: number;
+  resultDesc: string;
+  merchantRequestId: string;
+  user?: string;
+  orderId?: string;
+}
+
+export type CallbackMetadataItem = {
+  Name: string;
+  Value: string | number;
+};

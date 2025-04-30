@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { formatNumberWithDecimal } from './utils'
+import { formatNumberWithDecimal } from './utils/utils'
+
 
 // Define a reusable ObjectId validator
 const MongoId = z

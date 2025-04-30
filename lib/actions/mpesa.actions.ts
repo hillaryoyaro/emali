@@ -2,12 +2,13 @@
 
 import mongoose from 'mongoose';
 import { connectToDatabase } from '@/lib/db';
-import { formatError } from '@/lib/utils';
+
 import Order from '../db/models/order.model';
 import { mpesa } from '../payments/mpesa/safaricom';
 import { sendPurchaseReceipt } from '@/emails';
 import { revalidatePath } from 'next/cache';
 import MpesaTransaction, { IMpesaTransaction } from '../db/models/mpesa.model';
+import { formatError } from '../utils/utils';
 
 // Helper: Type guard to check if user is populated
 interface User {

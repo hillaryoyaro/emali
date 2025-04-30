@@ -1,4 +1,4 @@
-import { MpesaCallback } from "@/types/mpesa"
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -144,28 +144,3 @@ export function formatId(id: string) {
   return `..${id.substring(id.length - 6)}`
 }
 
-
-// --- Mpesa Callback Utility Functions ---
-export function extractAmount(data: MpesaCallback): number {
-  return (
-    data.Body?.stkCallback?.CallbackMetadata?.Item?.find(
-      (item) => item.Name === "Amount"
-    )?.Value ?? 0
-  ) as number;
-}
-
-export function extractPhone(data: MpesaCallback): string {
-  return (
-    data.Body?.stkCallback?.CallbackMetadata?.Item?.find(
-      (item) => item.Name === "PhoneNumber"
-    )?.Value?.toString() ?? ""
-  );
-}
-
-export function extractTransactionDate(data: MpesaCallback): string {
-  return (
-    data.Body?.stkCallback?.CallbackMetadata?.Item?.find(
-      (item) => item.Name === "TransactionDate"
-    )?.Value?.toString() ?? new Date().toISOString()
-  );
-}

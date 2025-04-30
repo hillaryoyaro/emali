@@ -4,8 +4,8 @@ import { connectToDatabase } from "../db"
 import Order from "../db/models/order.model"
 import { sendPurchaseReceipt } from "@/emails"
 import { paypal } from "../payments/paypal/paypal"
-import { formatError } from "../utils"
 import { revalidatePath } from "next/cache"
+import { formatError } from "../utils/utils"
 
 // Create PayPal Order
 export async function createPayPalOrder(orderId: string) {

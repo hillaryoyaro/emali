@@ -1,38 +1,40 @@
-import {
-  extractAmount,
-  extractPhone,
-  extractTransactionDate,
-} from '@/lib/utils'
-import type { MpesaCallback } from '@/types/mpesa'
 
-export function validateCallback(data: MpesaCallback) {
-  const metadata = data.Body.stkCallback.CallbackMetadata?.Item || []
-  const getMetadataValue = (name: string) =>
-    metadata.find((item) => item.Name === name)?.Value
+import { extractAmount, extractPhone, extractTransactionDate } from '@/lib/utils/mpesa';
+//import { extractAmount, extractPhone } from '@/lib/utils/utils';
+import type { RawMpesaCallback } from '@/types/mpesa';
 
-  const resultCode = data.Body.stkCallback.ResultCode
-  const resultDesc = data.Body.stkCallback.ResultDesc
-  const checkoutRequestID = data.Body.stkCallback.CheckoutRequestID
-  const amount = extractAmount(data)
-  const phone = extractPhone(data)
-  const transactionDate = extractTransactionDate(data)
-  const mpesaReceiptNumber = String(getMetadataValue('MpesaReceiptNumber') ?? '')
-  const orderId = String(getMetadataValue('AccountReference') ?? '')
-  const merchantRequestId = data.Body.stkCallback.MerchantRequestID || ''
+export interface ParsedMpesaCallback {
+  resultCode: number;
+  resultDesc: string;
+  checkoutRequestID: string;
+  amount: number;
+  phone: string;
+  transactionDate: string;
+  orderId: string;
+  mpesaReceiptNumber: string;
+  merchantRequestId: string;
+  user: string; // Can be resolved later if needed
+}
 
-  if (!phone || !mpesaReceiptNumber || !orderId) {
-    throw new Error('Missing required fields in Mpesa callback')
-  }
+// This function extracts the metadata values safely
+export function validateCallback(data: RawMpesaCallback): ParsedMpesaCallback {
+  const metadata = data.Body?.stkCallback?.CallbackMetadata?.Item || [];
+
+  const getMetadataValue = (name: string): string => {
+    const found = metadata.find((item) => item.Name === name);
+    return found?.Value?.toString() || '';
+  };
 
   return {
-    resultCode,
-    resultDesc,
-    checkoutRequestID,
-    amount,
-    phone,
-    transactionDate,
-    mpesaReceiptNumber,
-    orderId,
-    merchantRequestId,
-  }
+    resultCode: data.Body?.stkCallback?.ResultCode ?? -1,
+    resultDesc: data.Body?.stkCallback?.ResultDesc ?? 'Missing ResultDesc',
+    checkoutRequestID: data.Body?.stkCallback?.CheckoutRequestID ?? '',
+    amount: extractAmount(data),
+    phone: extractPhone(data),
+    transactionDate: extractTransactionDate(data),
+    orderId: getMetadataValue('AccountReference'),
+    mpesaReceiptNumber: getMetadataValue('MpesaReceiptNumber'),
+    merchantRequestId: data.Body?.stkCallback?.MerchantRequestID ?? '',
+    user: '', // Leave empty; can populate later in route handler
+  };
 }

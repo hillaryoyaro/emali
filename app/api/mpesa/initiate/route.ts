@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectToDatabase } from '@/lib/db';
-import { formatError } from '@/lib/utils';
 import Order from '@/lib/db/models/order.model';
 import { createMpesaOrder } from '@/lib/actions/mpesa.actions';
+import { formatError } from '@/lib/utils/utils';
 
 export async function POST(req: NextRequest) {
   try {

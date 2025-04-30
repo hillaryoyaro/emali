@@ -7,11 +7,12 @@ import { CheckCircle2Icon } from 'lucide-react'
 
 import useCartStore from '@/hooks/stores/use-cart-store'
 import { FREE_SHIPPING_PRICE } from '@/lib/constants'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import ProductPrice from '@/components/shared/product/product-price'
 import BrowsingHistoryList from '@/components/shared/common/browsing-history-list'
+
 
 export default function CartAddItem({ itemId }: { itemId: string }) {
   const {

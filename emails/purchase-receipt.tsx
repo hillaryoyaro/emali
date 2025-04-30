@@ -14,9 +14,10 @@ import {
     Text,
   } from '@react-email/components'
   
-  import { formatCurrency } from '@/lib/utils'
-  import { IOrder } from '@/lib/db/models/order.model'
+import { formatCurrency } from '@/lib/utils/utils'
+import { IOrder } from '@/lib/db/models/order.model'
 import { SERVER_URL } from '@/lib/constants'
+
  
  
   type OrderInformationProps = {

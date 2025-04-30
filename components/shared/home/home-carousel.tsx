@@ -11,7 +11,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel'
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import { Button } from '@/components/ui/button'
 
 export function HomeCarousel({ 

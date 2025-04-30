@@ -5,7 +5,8 @@ import { auth } from '@/auth'
 import { getOrderById } from '@/lib/actions/order.actions'
 import OrderDetailsForm from '@/components/shared/order/order-details-form'
 import Link from 'next/link'
-import { formatId } from '@/lib/utils'
+import { formatId } from '@/lib/utils/utils'
+
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>

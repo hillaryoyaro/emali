@@ -10,7 +10,8 @@ import {
   getProductsByTag,
 } from '@/lib/actions/product.actions'
 import data from '@/lib/data'
-import { toSlug } from '@/lib/utils'
+import { toSlug } from '@/lib/utils/utils'
+
 
 export default async function HomePage() {
   // ✅ Fix: Assert getAllCategories() as string[]

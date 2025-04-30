@@ -11,9 +11,10 @@ import StripeForm from './stripe-form'
 import { useRouter } from 'next/navigation'
 import { redirect } from 'next/navigation'
 import { IOrder } from '@/lib/db/models/order.model'
-import { formatDateTime } from '@/lib/utils'
+
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
+import { formatDateTime } from '@/lib/utils/utils'
 
 // Stripe initialization
 const stripePromise = loadStripe(

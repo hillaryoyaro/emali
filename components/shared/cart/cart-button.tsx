@@ -3,7 +3,7 @@
 import { ShoppingCartIcon } from 'lucide-react'
 import Link from 'next/link'
 import useIsMounted from '@/hooks/client/use-is-mounted'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 import useCartStore from '@/hooks/stores/use-cart-store'
 import useCartSidebar from '@/hooks/client/use-cart-sidebar'
 

@@ -4,7 +4,7 @@ import React, { useEffect } from 'react'
 import ProductSlider from '../product/product-slider'
 
 import { Separator } from '../../ui/separator'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/utils'
 
 export default function BrowsingHistoryList({
   className,

@@ -1,5 +1,5 @@
 'use client'
-import { cn, formatCurrency,  } from '@/lib/utils'
+import { cn, formatCurrency,  } from '@/lib/utils/utils'
 
 const ProductPrice = ({
   price,
