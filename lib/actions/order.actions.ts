@@ -5,7 +5,7 @@ import {   Cart, OrderItem, ShippingAddress  } from '@/types'
 import { formatError, round2 } from '../utils/utils'
 import { AVAILABLE_DELIVERY_DATES } from '../constants'
 import { auth } from '@/auth'
-import { OrderInputSchema } from '../validator'
+import { OrderInputSchema } from '../validation/validator'
 import Order, { IOrder } from '../db/models/order.model'
 
 

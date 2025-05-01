@@ -17,7 +17,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 
 import { IUserSignIn } from '@/types'
-import { UserSignInSchema } from '@/lib/validator'
+import { UserSignInSchema } from '@/lib/validation/validator'
 
 import { toast } from '@/hooks/client/use-toast'
 import { APP_NAME } from '@/lib/constants'

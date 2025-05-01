@@ -8,7 +8,7 @@ import {
   UserInputSchema, 
   UserSignInSchema,
   UserSignUpSchema
- } from "@/lib/validator";
+ } from "@/lib/validation/validator";
 import {  z } from 'zod'
 
 
