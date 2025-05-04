@@ -1,9 +1,10 @@
+import { MpesaInputSchema } from "@/lib/validation/mpesa";
 import { 
   CartSchema, 
-  MpesaInputSchema, 
   OrderInputSchema, 
   OrderItemSchema, 
   ProductInputSchema, 
+  ReviewInputSchema, 
   ShippingAddressSchema, 
   UserInputSchema, 
   UserSignInSchema,
@@ -11,10 +12,24 @@ import {
  } from "@/lib/validation/validator";
 import {  z } from 'zod'
 
+export type IReviewInput = z.infer<typeof ReviewInputSchema>
+export type IReviewDetails = IReviewInput & {
+  _id: string
+  createdAt: string
+  user: {
+    name: string
+  }
+}
+
 
 export type Data = {
     users: IUserInput[]
     products: IProductInput[]
+    reviews: {
+      title: string
+      rating: number
+      comment: string
+    }[]
     headerMenus: {
       name: string
       href: string
