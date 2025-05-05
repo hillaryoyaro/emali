@@ -1,14 +1,22 @@
-import mongoose from "mongoose";
-import { NextResponse } from "next/server";
+// Imports
+import mongoose from 'mongoose';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import MpesaTransaction from "@/lib/db/models/mpesa.model";
-import Order from "@/lib/db/models/order.model";
-import { connectToDatabase } from "@/lib/db";
+import { connectToDatabase } from '@/lib/db';
+import MpesaTransaction from '@/lib/db/models/mpesa.model';
+import MpesaCheckoutMapping from '@/lib/db/models/mpesaCheckout.model';
+import Order from '@/lib/db/models/order.model';
 
-import { sendPurchaseReceipt } from "@/emails";
-import { validateCallback } from "@/lib/payments/mpesa/validateCallback";
-import { MpesaCallback } from "@/types/mpesa";
+import { sendPurchaseReceipt } from '@/emails';
+import { validateCallback } from '@/lib/payments/mpesa/validateCallback';
+import type { MpesaCallback } from '@/types/mpesa';
 
+// Zod schema for callback user and order
+const callbackSchema = z.object({
+  user: z.string().optional(),
+  orderId: z.string().optional(),
+});
 
 export async function POST(req: Request) {
   await connectToDatabase();
@@ -16,23 +24,32 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // Step 1: Validate and extract core Mpesa data
-    const parsed: MpesaCallback = validateCallback(body);
+    // ✅ Validate with Zod for callback fields
+    const callbackData = callbackSchema.parse(body);
 
-    // Step 2: Attach optional fields from body (user and orderId)
-    parsed.user = body.user ?? undefined;
-    parsed.orderId = body.orderId ?? undefined;
+    // ✅ Validate M-Pesa callback structure
+    const parsed: MpesaCallback = validateCallback(body);
+    parsed.user = callbackData.user;
+    parsed.orderId = callbackData.orderId;
 
     if (
       !parsed.checkoutRequestID ||
-      !parsed.orderId ||
       !parsed.mpesaReceiptNumber ||
       !parsed.phone
     ) {
-      return NextResponse.json({ error: "Invalid callback data" }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid callback data' }, { status: 400 });
     }
 
-    // Step 3: Find or create MpesaTransaction
+    // ✅ Attempt to resolve user/order from DB mapping if not in callback for persistence
+    const mapping = await MpesaCheckoutMapping.findOne({
+      checkoutRequestId: parsed.checkoutRequestID,
+    });
+
+    if (mapping) {
+      parsed.orderId = parsed.orderId ?? mapping.orderId;
+      parsed.user = parsed.user ?? mapping.userId;
+    }
+
     let mpesaTx = await MpesaTransaction.findOne({
       checkoutRequestId: parsed.checkoutRequestID,
     });
@@ -48,11 +65,10 @@ export async function POST(req: Request) {
         resultDesc: parsed.resultDesc,
         merchantRequestId: parsed.merchantRequestId,
         checkoutRequestId: parsed.checkoutRequestID,
-        status: parsed.resultCode === 0 ? "SUCCESS" : "FAILED",
+        status: parsed.resultCode === 0 ? 'SUCCESS' : 'FAILED',
         user: parsed.user ? new mongoose.Types.ObjectId(parsed.user) : undefined,
         orderId: parsed.orderId ? new mongoose.Types.ObjectId(parsed.orderId) : undefined,
       });
-
       await mpesaTx.save();
     } else {
       // Create new transaction
@@ -65,45 +81,45 @@ export async function POST(req: Request) {
         resultDesc: parsed.resultDesc,
         merchantRequestId: parsed.merchantRequestId,
         checkoutRequestId: parsed.checkoutRequestID,
-        status: parsed.resultCode === 0 ? "SUCCESS" : "FAILED",
+        status: parsed.resultCode === 0 ? 'SUCCESS' : 'FAILED',
         user: parsed.user ? new mongoose.Types.ObjectId(parsed.user) : undefined,
         orderId: parsed.orderId ? new mongoose.Types.ObjectId(parsed.orderId) : undefined,
       });
     }
 
-    // Step 4: If successful payment, update order and send receipt
-    if (parsed.resultCode === 0) {
+    // ✅ Update order if payment successful
+    if (parsed.resultCode === 0 && parsed.orderId) {
       const order = await Order.findByIdAndUpdate(
         parsed.orderId,
         {
           $set: {
             isPaid: true,
             paidAt: new Date(),
-            paymentMethod: "Mpesa",
+            paymentMethod: 'Mpesa',
             paymentResult: {
               id: parsed.mpesaReceiptNumber,
-              status: "COMPLETED",
+              status: 'COMPLETED',
               email_address: parsed.phone,
             },
           },
         },
         { new: true }
-      ).populate("user", "email name");
+      ).populate('user', 'email name');
 
       if (!order) {
-        return NextResponse.json({ error: "Order not found" }, { status: 404 });
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
 
       try {
         await sendPurchaseReceipt({ order });
-      } catch (error) {
-        console.error("Error sending receipt email:", error);
+      } catch (emailError) {
+        console.error('Error sending receipt email:', emailError);
       }
     }
 
-    return NextResponse.json({ message: "Callback received and processed" });
+    return NextResponse.json({ message: 'Callback received and processed' });
   } catch (error) {
-    console.error("Error handling Mpesa callback:", error);
-    return NextResponse.json({ message: "Internal Server Error", error }, { status: 500 });
+    console.error('Error handling Mpesa callback:', error);
+    return NextResponse.json({ message: 'Internal Server Error', error }, { status: 500 });
   }
 }

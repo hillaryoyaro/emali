@@ -1,16 +1,18 @@
+// File: lib/actions/mpesa.actions.ts
 'use server';
 
 import mongoose from 'mongoose';
 import { connectToDatabase } from '@/lib/db';
 
 import Order from '../db/models/order.model';
+//import MpesaCheckoutMapping from '../db/models/mpesaCheckoutMapping.model';
 import { mpesa } from '../payments/mpesa/safaricom';
 import { sendPurchaseReceipt } from '@/emails';
 import { revalidatePath } from 'next/cache';
 import MpesaTransaction, { IMpesaTransaction } from '../db/models/mpesa.model';
 import { formatError } from '../utils/utils';
+import MpesaCheckoutMapping from '../db/models/mpesaCheckout.model';
 
-// Helper: Type guard to check if user is populated
 interface User {
   _id: string | mongoose.Types.ObjectId;
   email: string;
@@ -28,24 +30,27 @@ export async function createMpesaOrder(orderId: string) {
 
     const phone = order.shippingAddress.phone;
 
-    // ✅ Check for existing pending transaction for this phone
     const existingTx = await MpesaTransaction.findOne({
       phone,
       status: 'PENDING',
     });
 
     if (existingTx) {
-      throw new Error(
-        'A transaction is already in progress for this number. Please wait for it to complete.'
-      );
+      throw new Error('A transaction is already in progress for this number.');
     }
 
-    // 🔥 Ensure amount is an integer (Mpesa doesn't allow decimals)
     const amount = Math.ceil(order.totalPrice);
 
     const response = await mpesa.initiateStkPush(amount, phone);
 
-    console.log('STK Push API Response:', response);
+    // 💡 Store the checkoutRequestId mapping to order/user
+    if (response?.CheckoutRequestID) {
+      await MpesaCheckoutMapping.create({
+        orderId: order._id.toString(),
+        userId: order.user.toString(),
+        checkoutRequestId: response.CheckoutRequestID,
+      });
+    }
 
     return {
       success: true,
@@ -97,3 +102,4 @@ export async function approveMpesaOrder(
     };
   }
 }
+

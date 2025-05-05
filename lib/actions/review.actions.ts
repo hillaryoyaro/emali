@@ -85,7 +85,7 @@ export async function createUpdateReview({
         
   ])
   //Calculate the total number of reviews and average rating
-  const totalReviews = result.reduce((sum, {account}) => sum + account, 0) 
+  const totalReviews = result.reduce((sum, { count}) => sum + count, 0) 
   const averageRating = result.reduce((sum, { _id, count }) => sum + _id * count, 0) / totalReviews
 
   //Calcaulate aggregation result  to a map for easier lookup

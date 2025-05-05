@@ -1,6 +1,4 @@
-
 import { extractAmount, extractPhone, extractTransactionDate } from '@/lib/utils/mpesa';
-//import { extractAmount, extractPhone } from '@/lib/utils/utils';
 import type { RawMpesaCallback } from '@/types/mpesa';
 
 export interface ParsedMpesaCallback {
@@ -13,28 +11,44 @@ export interface ParsedMpesaCallback {
   orderId: string;
   mpesaReceiptNumber: string;
   merchantRequestId: string;
-  user: string; // Can be resolved later if needed
+  user?: string; // can be resolved later
 }
+
 
 // This function extracts the metadata values safely
 export function validateCallback(data: RawMpesaCallback): ParsedMpesaCallback {
-  const metadata = data.Body?.stkCallback?.CallbackMetadata?.Item || [];
+  if (!data?.Body?.stkCallback) {
+    throw new Error('Invalid M-Pesa callback: Missing stkCallback');
+  }
+
+  const callback = data.Body.stkCallback;
+  const metadata = callback.CallbackMetadata?.Item || [];
 
   const getMetadataValue = (name: string): string => {
     const found = metadata.find((item) => item.Name === name);
-    return found?.Value?.toString() || '';
+    if (!found || found.Value === undefined || found.Value === null) {
+      return '';
+    }
+    return String(found.Value);
   };
 
-  return {
-    resultCode: data.Body?.stkCallback?.ResultCode ?? -1,
-    resultDesc: data.Body?.stkCallback?.ResultDesc ?? 'Missing ResultDesc',
-    checkoutRequestID: data.Body?.stkCallback?.CheckoutRequestID ?? '',
+  const parsed: ParsedMpesaCallback = {
+    resultCode: callback.ResultCode ?? -1,
+    resultDesc: callback.ResultDesc ?? 'Missing ResultDesc',
+    checkoutRequestID: callback.CheckoutRequestID ?? '',
+    merchantRequestId: callback.MerchantRequestID ?? '',
     amount: extractAmount(data),
     phone: extractPhone(data),
     transactionDate: extractTransactionDate(data),
-    orderId: getMetadataValue('AccountReference'),
     mpesaReceiptNumber: getMetadataValue('MpesaReceiptNumber'),
-    merchantRequestId: data.Body?.stkCallback?.MerchantRequestID ?? '',
-    user: '', // Leave empty; can populate later in route handler
+    orderId: getMetadataValue('AccountReference'),
+    user: '', // This will be filled later in route handler if available
   };
+
+  // Optional: throw if required fields are missing
+  if (!parsed.checkoutRequestID || !parsed.mpesaReceiptNumber || !parsed.phone) {
+    throw new Error('Missing critical M-Pesa fields in callback');
+  }
+
+  return parsed;
 }
