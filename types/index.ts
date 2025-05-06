@@ -7,6 +7,7 @@ import {
   ReviewInputSchema, 
   ShippingAddressSchema, 
   UserInputSchema, 
+  UserNameSchema, 
   UserSignInSchema,
   UserSignUpSchema
  } from "@/lib/validation/validator";
@@ -57,5 +58,6 @@ export type ShippingAddress = z.infer<typeof ShippingAddressSchema>
 export type IUserInput = z.infer<typeof UserInputSchema>
 export type IUserSignIn = z.infer<typeof UserSignInSchema>
 export type IUserSignUp = z.infer<typeof UserSignUpSchema>
+export type IUserName = z.infer<typeof UserNameSchema>
 
 export type IMpesaTransactionInput = z.infer<typeof MpesaInputSchema>
