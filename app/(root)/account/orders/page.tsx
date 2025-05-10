@@ -20,6 +20,8 @@ const PAGE_TITLE = 'Your Orders'
 export const metadata: Metadata = {
   title: PAGE_TITLE,
 }
+
+//Create order page as server component to accept props
 export default async function OrdersPage(props: {
   searchParams: Promise<{ page: string }>
 }) {

@@ -9,7 +9,7 @@ export default function ErrorPage({
   reset,
 }: {
   error: Error
-  reset: () => void
+  reset: () => void 
 }) {
   
   return (
@@ -18,7 +18,7 @@ export default function ErrorPage({
         <h1 className='text-3xl font-bold mb-4'>{('Error.Error')}</h1>
         <p className='text-destructive'>{error.message}</p>
         <Button variant='outline' className='mt-4' onClick={() => reset()}>
-          {('Error.Try again')}
+          {('Try again')}
         </Button>
         <Button
           variant='outline'

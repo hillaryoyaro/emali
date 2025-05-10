@@ -1,29 +1,37 @@
 'use client'
 import React from 'react'
 import useCartSidebar from '@/hooks/client/use-cart-sidebar'
-import CartSidebar from '@/components/shared/cart/cart-sidebar'
+import CartSidebar from '../cart/cart-sidebar'
+import { ThemeProvider } from '../theme/theme-provider'
 import { Toaster } from '@/components/ui/toaster'
 
-//You can remove side bar if you are not using it but uncommenting the code from client providers 
+
 
 export default function ClientProviders({
+  
   children,
 }: {
+ 
   children: React.ReactNode
 }) {
-  const isCartSidebarOpen = useCartSidebar()
+  const visible = useCartSidebar()
+
   return (
-   <>
-    {isCartSidebarOpen ? (
-      <div className='flex min-h-screen'>
-        <div className='flex-1 overflow-hidden'>{children}</div>
-        <CartSidebar /> 
-      </div>
-    ) : (
-        <div>{children}</div>
-      )}
-    <Toaster />
     
-   </>
+      <ThemeProvider
+        attribute='class'
+        defaultTheme='system'
+      >
+        {visible ? (
+          <div className='flex min-h-screen'>
+            <div className='flex-1 overflow-hidden'>{children}</div>
+            <CartSidebar />
+          </div>
+        ) : (
+          <div>{children}</div>
+        )}
+        <Toaster />
+      </ThemeProvider>
+  
   )
 }
