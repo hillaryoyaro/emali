@@ -51,9 +51,9 @@ export default function TableChart({
   }))
   return (
     <div className='space-y-3'>
-      {dataWithPercentage.map(({ label, id, value, image, percentage }) => (
+      {dataWithPercentage.map(({ label, id, value, image, percentage },index) => (
         <div
-          key={label}
+          key={id ?? `${label}-${index}`}
           className='grid grid-cols-[100px_1fr_80px] md:grid-cols-[250px_1fr_80px] gap-2 space-y-4  '
         >
           {image ? (
