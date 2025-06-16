@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
-import DatePicker from 'react-datepicker'
-import 'react-datepicker/dist/react-datepicker.css'
+import * as React from 'react'
 import { CalendarIcon } from 'lucide-react'
+import { DateRange } from 'react-day-picker'
+
 import { cn, formatDateTime } from '@/lib/utils/utils'
 import {
   Popover,
@@ -11,12 +11,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
 import { PopoverClose } from '@radix-ui/react-popover'
-
-type DateRange = {
-  from: Date
-  to: Date
-}
 
 export function CalendarDateRangePicker({
   defaultDate,
@@ -27,32 +23,31 @@ export function CalendarDateRangePicker({
   setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>
   className?: string
 }) {
-  const [calendarDate, setCalendarDate] = useState<[Date | null, Date | null]>([
-    defaultDate?.from || null,
-    defaultDate?.to || null,
-  ])
+  const [calendarDate, setCalendarDate] = React.useState<DateRange | undefined>(
+    defaultDate
+  )
 
   return (
     <div className={cn('grid gap-2', className)}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
-            id="date"
-            variant="outline"
+            id='date'
+            variant={'outline'}
             className={cn(
               'justify-start text-left font-normal',
-              !calendarDate[0] && 'text-muted-foreground'
+              !calendarDate && 'text-muted-foreground'
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {calendarDate[0] ? (
-              calendarDate[1] ? (
+            <CalendarIcon className='mr-0 h-4 w-4' />
+            {calendarDate?.from ? (
+              calendarDate.to ? (
                 <>
-                  {formatDateTime(calendarDate[0]).dateOnly} -{' '}
-                  {formatDateTime(calendarDate[1]).dateOnly}
+                  {formatDateTime(calendarDate.from).dateOnly} -{' '}
+                  {formatDateTime(calendarDate.to).dateOnly}
                 </>
               ) : (
-                formatDateTime(calendarDate[0]).dateOnly
+                formatDateTime(calendarDate.from).dateOnly
               )
             ) : (
               <span>Pick a date</span>
@@ -60,46 +55,23 @@ export function CalendarDateRangePicker({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          onCloseAutoFocus={() =>
-            setCalendarDate([
-              defaultDate?.from || null,
-              defaultDate?.to || null,
-            ])
-          }
-          className="w-auto p-4"
-          align="end"
+          onCloseAutoFocus={() => setCalendarDate(defaultDate)}
+          className='w-auto p-0'
+          align='end'
         >
-          <DatePicker
-            selectsRange
-            startDate={calendarDate[0]}
-            endDate={calendarDate[1]}
-            onChange={(dates) => setCalendarDate(dates as [Date, Date])}
-            inline
+          <Calendar
+            mode='range'
+            defaultMonth={defaultDate?.from}
+            selected={calendarDate}
+            onSelect={setCalendarDate}
+            numberOfMonths={2}
           />
-          <div className="flex gap-4 pt-4">
+          <div className='flex gap-4 p-4 pt-0'>
             <PopoverClose asChild>
-              <Button
-                onClick={() => {
-                  if (calendarDate[0] && calendarDate[1]) {
-                    setDate({ from: calendarDate[0], to: calendarDate[1] })
-                  }
-                }}
-              >
-                Apply
-              </Button>
+              <Button onClick={() => setDate(calendarDate)}>Apply</Button>
             </PopoverClose>
             <PopoverClose asChild>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setCalendarDate([
-                    defaultDate?.from || null,
-                    defaultDate?.to || null,
-                  ])
-                }
-              >
-                Cancel
-              </Button>
+              <Button variant={'outline'}>Cancel</Button>
             </PopoverClose>
           </div>
         </PopoverContent>
