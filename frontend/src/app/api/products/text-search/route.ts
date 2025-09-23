@@ -10,6 +10,16 @@ import {
 } from '@/src/lib/actions/search.action';
 import { getCache, setCache } from '@/src/lib/cache/cache';
 
+// Define a product type (adjust fields to match your DB schema)
+export interface Product {
+  _id: string;
+  name: string;
+  price?: number;
+  category?: string;
+  description?: string;
+  image?: string;
+}
+
 export type SortOption =
   | 'priceLowHigh'
   | 'priceHighLow'
@@ -23,8 +33,7 @@ const allowedSorts: SortOption[] = [
   'bestSelling',
 ];
 
-// Cache entries live for 60 seconds
-const CACHE_TTL = 60;
+const CACHE_TTL = 60; // cache for 60 seconds
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -34,6 +43,7 @@ export async function GET(req: NextRequest) {
   const tag = searchParams.get('tag') || 'all';
   const page = Number(searchParams.get('page') || 1);
   const limit = Number(searchParams.get('limit') || 12);
+  const mode = searchParams.get('mode') || 'default'; // 👈 suggestions mode
   const price = searchParams.get('price') || 'all';
 
   const rawRating = searchParams.get('rating');
@@ -45,10 +55,9 @@ export async function GET(req: NextRequest) {
     ? (rawSort as SortOption)
     : 'newest';
 
-  // Build a unique cache key
-  const cacheKey = `products:${query}:${category}:${tag}:${page}:${limit}:${price}:${rating ?? ''}:${sort}`;
+  const cacheKey = `products:${query}:${category}:${tag}:${page}:${limit}:${price}:${rating ?? ''}:${sort}:${mode}`;
 
-  // 1️⃣ Try cache first
+  // 1️⃣ Check cache
   const cached = getCache<GetAllProductsResult | GetProductsByTextSearchResult>(
     cacheKey
   );
@@ -57,7 +66,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // 2️⃣ Choose which data source
+    // 2️⃣ Broad vs. text search
     const isBroadBrowse = !query || query === 'all' || query.length < 3;
     let result: GetAllProductsResult | GetProductsByTextSearchResult;
 
@@ -73,7 +82,6 @@ export async function GET(req: NextRequest) {
         sort,
       });
     } else {
-      // Try catalog first (cheaper) then fallback to text search
       const catalog = await getAllProducts({
         query,
         category,
@@ -100,9 +108,18 @@ export async function GET(req: NextRequest) {
             });
     }
 
-    // 3️⃣ Store in cache
-    setCache(cacheKey, result, CACHE_TTL);
+    // 3️⃣ If in "suggestions" mode, only return ID + name
+    if (mode === 'suggestions') {
+      return NextResponse.json({
+        suggestions: result.products.map((p: Product) => ({
+          id: p._id,
+          name: p.name,
+        })),
+      });
+    }
 
+    // 4️⃣ Store in cache & return full results
+    setCache(cacheKey, result, CACHE_TTL);
     return NextResponse.json({ ...result, fromCache: false });
   } catch (error) {
     const message =
