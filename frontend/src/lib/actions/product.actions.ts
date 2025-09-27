@@ -47,7 +47,7 @@ export async function getAllCategories() {
 // products for card
 export async function getProductsForCard({
   tag,
-  limit = 4,
+  limit = 5,
 }: {
   tag: string
   limit?: number
@@ -231,4 +231,20 @@ export async function getAllTags() {
           .join(' ')
       ) as string[]) || []
   )
+}
+
+
+export async function getSearchResults(query: string, page = 1, limit = 12) {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/products?q=${encodeURIComponent(
+      query
+    )}&page=${page}&limit=${limit}`,
+    { cache: 'no-store' }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch search results: ${res.statusText}`);
+  }
+
+  return res.json();
 }

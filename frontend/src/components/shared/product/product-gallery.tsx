@@ -24,14 +24,14 @@ export default function ProductGallery({ images }: { images: string[] }) {
                 : 'ring-1 ring-gray-300'
             }`}
           >
-            <Image src={image} alt={'product image'} width={38} height={38} />
+            <Image src={image} alt={'product image'} width={20} height={20} />
           </button>
         ))}
       </div>
 
       <div className='w-full'>
         <Zoom>
-          <div className='relative h-[500px]'>
+          <div className='relative h-[400px]'>
             <Image
               src={images[selectedImage]}
               alt={'product image'}

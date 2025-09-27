@@ -1,9 +1,10 @@
+
 'use client'
 
 import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/src/components/ui/input'
-import { SearchIcon, CameraIcon } from 'lucide-react'
+import { SearchIcon, CameraIcon, X } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -20,7 +21,6 @@ interface Suggestion {
   name: string
   image?: string | null
 }
-
 
 export default function SearchBar() {
   const [categories, setCategories] = useState<string[]>([])
@@ -41,7 +41,7 @@ export default function SearchBar() {
       })
   }, [])
 
-   // 🔎 Fetch suggestions
+  // 🔎 Fetch suggestions
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (query.length < 2) {
@@ -49,7 +49,9 @@ export default function SearchBar() {
         return
       }
       try {
-        const res = await fetch(`/api/products/text-search?mode=suggestions&q=${query}&limit=5`)
+        const res = await fetch(
+          `/api/products/text-search?mode=suggestions&q=${query}&limit=5`
+        )
         if (res.ok) {
           const data = await res.json()
           setSuggestions(data.suggestions || [])
@@ -99,7 +101,9 @@ export default function SearchBar() {
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setActiveIndex((prev) =>
-        prev === -1 ? suggestions.length - 1 : (prev - 1 + suggestions.length) % suggestions.length
+        prev === -1
+          ? suggestions.length - 1
+          : (prev - 1 + suggestions.length) % suggestions.length
       )
     } else if (e.key === 'Enter') {
       if (activeIndex >= 0 && activeIndex < suggestions.length) {
@@ -159,56 +163,62 @@ export default function SearchBar() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full rounded-none bg-gray-100 text-black text-base h-full"
+            className="w-full rounded-none bg-gray-100 text-black text-base h-full pr-10"
             placeholder={`Search ${APP_NAME}`}
           />
 
-          {/* 🔽 Suggestions dropdown */}
+          {/* ❌ Close button (visible whenever input has text) */}
+          {query && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery('')
+                setSuggestions([])
+                inputRef.current?.focus()
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
 
+          {/* 🔽 Suggestions dropdown */}
           {suggestions.length > 0 && (
             <ul
               ref={dropdownRef}
               className="absolute z-50 bg-white text-black border rounded-md shadow-md
-                  max-h-80 overflow-y-auto 
-                  left-0 right-0 w-[90vw] max-w-3xl mx-auto 
-                  top-[calc(100%+12px)]"
-          >
-          {suggestions.map((s, i) => (
-            <li
-              key={s.id}
-              className={`flex items-center gap-3 px-3 py-3 cursor-pointer text-base ${
-                i === activeIndex
-                ? "bg-gray-100"
-                : "hover:bg-green-500 hover:text-white"
-          }`}
-          onClick={() => {
-            setSuggestions([])
-            router.push(`/search?q=${encodeURIComponent(s.name)}`)
-          }}
-      >
-        {/* 🔍 Search icon on the left */}
-        <SearchIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-
-        {/* Product name in the middle */}
-        <span className="flex-1">{s.name}</span>
-
-        {/* ✅ Product image on the right */}
-        {s.image && (
-          <Image
-            src={s.image}
-            alt={s.name}
-            width={40}
-            height={40}
-            className="w-10 h-10 object-cover rounded-md border flex-shrink-0"
-          />
-        )}
-      </li>
-    ))}
-  </ul>
-)}
-
-
-
+                max-h-80 overflow-y-auto 
+                left-0 right-0 w-[90vw] max-w-3xl mx-auto 
+                top-[calc(100%+12px)]"
+            >
+              {suggestions.map((s, i) => (
+                <li
+                  key={s.id}
+                  className={`flex items-center gap-3 px-3 py-3 cursor-pointer text-base ${
+                    i === activeIndex
+                      ? 'bg-gray-100'
+                      : 'hover:bg-green-500 hover:text-white'
+                  }`}
+                  onClick={() => {
+                    setSuggestions([])
+                    router.push(`/search?q=${encodeURIComponent(s.name)}`)
+                  }}
+                >
+                  <SearchIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <span className="flex-1">{s.name}</span>
+                  {s.image && (
+                    <Image
+                      src={s.image}
+                      alt={s.name}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 object-cover rounded-md border flex-shrink-0"
+                    />
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Camera picker */}
@@ -234,3 +244,4 @@ export default function SearchBar() {
     </div>
   )
 }
+
