@@ -99,3 +99,5 @@ export interface GetProductsByTextSearchParams {
   page: number
   pages: number
 }
+
+
