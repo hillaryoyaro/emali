@@ -13,13 +13,21 @@ import {
 } from '@/src/components/ui/select'
 import { APP_NAME } from '@/src/lib/constants'
 import { getAllCategories } from '@/src/lib/actions/product.actions'
+import Image from 'next/image'
+
+interface Suggestion {
+  id: string
+  name: string
+  image?: string | null
+}
+
 
 export default function SearchBar() {
   const [categories, setCategories] = useState<string[]>([])
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
   const [image, setImage] = useState<File | null>(null)
-  const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>([])
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [activeIndex, setActiveIndex] = useState(-1)
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -33,7 +41,7 @@ export default function SearchBar() {
       })
   }, [])
 
-  // 🔎 Fetch suggestions
+   // 🔎 Fetch suggestions
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (query.length < 2) {
@@ -156,29 +164,51 @@ export default function SearchBar() {
           />
 
           {/* 🔽 Suggestions dropdown */}
+
           {suggestions.length > 0 && (
             <ul
               ref={dropdownRef}
-              className="absolute z-50 bg-white text-black border rounded-md mt-1 w-full shadow-md max-h-60 overflow-y-auto"
-            >
-              {suggestions.map((s, i) => (
-                <li
-                  key={s.id}
-                  className={`flex items-center gap-2 px-3 py-2 cursor-pointer ${
-                    i === activeIndex ? 'bg-white text-black' : 'hover:bg-green-500'
-                  }`}
-                  onClick={() => {
-                    setQuery(s.name)
-                    setSuggestions([])
-                    router.push(`/search?q=${encodeURIComponent(s.name)}`)
-                  }}
-                >
-                  <SearchIcon className="w-4 h-4 text-gray-500" />
-                  <span>{s.name}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+              className="absolute z-50 bg-white text-black border rounded-md shadow-md
+                  max-h-80 overflow-y-auto 
+                  left-0 right-0 w-[90vw] max-w-3xl mx-auto 
+                  top-[calc(100%+12px)]"
+          >
+          {suggestions.map((s, i) => (
+            <li
+              key={s.id}
+              className={`flex items-center gap-3 px-3 py-3 cursor-pointer text-base ${
+                i === activeIndex
+                ? "bg-gray-100"
+                : "hover:bg-green-500 hover:text-white"
+          }`}
+          onClick={() => {
+            setSuggestions([])
+            router.push(`/search?q=${encodeURIComponent(s.name)}`)
+          }}
+      >
+        {/* 🔍 Search icon on the left */}
+        <SearchIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+
+        {/* Product name in the middle */}
+        <span className="flex-1">{s.name}</span>
+
+        {/* ✅ Product image on the right */}
+        {s.image && (
+          <Image
+            src={s.image}
+            alt={s.name}
+            width={40}
+            height={40}
+            className="w-10 h-10 object-cover rounded-md border flex-shrink-0"
+          />
+        )}
+      </li>
+    ))}
+  </ul>
+)}
+
+
+
         </div>
 
         {/* Camera picker */}

@@ -1,4 +1,3 @@
-// app/api/products/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getAllProducts,
@@ -10,14 +9,14 @@ import {
 } from '@/src/lib/actions/search.action';
 import { getCache, setCache } from '@/src/lib/cache/cache';
 
-// Define a product type (adjust fields to match your DB schema)
+// Define a product type (adjust to match DB schema)
 export interface Product {
   _id: string;
   name: string;
   price?: number;
   category?: string;
   description?: string;
-  image?: string;
+  images?: string[];
 }
 
 export type SortOption =
@@ -33,7 +32,7 @@ const allowedSorts: SortOption[] = [
   'bestSelling',
 ];
 
-const CACHE_TTL = 60; // cache for 60 seconds
+const CACHE_TTL = 60; // cache in seconds
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -43,7 +42,7 @@ export async function GET(req: NextRequest) {
   const tag = searchParams.get('tag') || 'all';
   const page = Number(searchParams.get('page') || 1);
   const limit = Number(searchParams.get('limit') || 12);
-  const mode = searchParams.get('mode') || 'default'; // 👈 suggestions mode
+  const mode = searchParams.get('mode') || 'default'; // 👈 suggestions or default
   const price = searchParams.get('price') || 'all';
 
   const rawRating = searchParams.get('rating');
@@ -66,7 +65,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // 2️⃣ Broad vs. text search
+    // 2️⃣ Decide between broad browse vs text search
     const isBroadBrowse = !query || query === 'all' || query.length < 3;
     let result: GetAllProductsResult | GetProductsByTextSearchResult;
 
@@ -82,6 +81,7 @@ export async function GET(req: NextRequest) {
         sort,
       });
     } else {
+      // Try broad search first
       const catalog = await getAllProducts({
         query,
         category,
@@ -108,17 +108,19 @@ export async function GET(req: NextRequest) {
             });
     }
 
-    // 3️⃣ If in "suggestions" mode, only return ID + name
+    // 3️⃣ If suggestions mode → return lightweight payload
     if (mode === 'suggestions') {
       return NextResponse.json({
         suggestions: result.products.map((p: Product) => ({
           id: p._id,
           name: p.name,
+          image:
+            Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null,
         })),
       });
     }
 
-    // 4️⃣ Store in cache & return full results
+    // 4️⃣ Otherwise → full payload with pagination
     setCache(cacheKey, result, CACHE_TTL);
     return NextResponse.json({ ...result, fromCache: false });
   } catch (error) {
