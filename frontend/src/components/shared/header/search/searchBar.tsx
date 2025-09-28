@@ -23,7 +23,6 @@ import { APP_NAME } from "@/src/lib/constants";
 import { getAllCategories } from "@/src/lib/actions/product.actions";
 import Image from "next/image";
 import ImageUpload from "./imageUpload";
-//import ImageUpload from "./ImageUpload"; // 👈 separate component
 
 interface Suggestion {
   id: string;
@@ -38,7 +37,8 @@ export default function SearchBar() {
   const [image, setImage] = useState<File | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [imageSearchOpen, setImageSearchOpen] = useState(false); // 👈 controls hover card
+  const [imageSearchOpen, setImageSearchOpen] = useState(false);
+
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLUListElement>(null);
@@ -178,7 +178,7 @@ export default function SearchBar() {
             placeholder={`Search ${APP_NAME}`}
           />
 
-          {/* ❌ Close button */}
+          {/* ❌ Clear button for text */}
           {query && (
             <button
               type="button"
@@ -244,11 +244,24 @@ export default function SearchBar() {
               <Camera className="w-5 h-5 text-gray-600" />
             </Button>
           </HoverCardTrigger>
-          <HoverCardContent className="w-80">
+          <HoverCardContent className="relative w-80">
+            {/* ❌ Close button for card */}
+            <button
+              type="button"
+              onClick={() => setImageSearchOpen(false)}
+              className="absolute right-2 top-2 text-gray-500 hover:text-black"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
             <h3 className="font-semibold text-sm mb-2">Search By Image</h3>
-            <h2 className=" text-sm mb-2">Find what you love with better prices on EmaliExpress by using an image search</h2>
+            <p className="text-sm mb-2">
+             Search smarter. Shop faster.Turn pictures into products instantly with EmaliExpress.
+            </p>
             <ImageUpload onFileSelect={setImage} />
-            <h1 className=" text-sm mb-2">*For a quick search hit CTRL+V to paste an image into the search box</h1>
+            <p className="text-xs mt-2 text-gray-500">
+              *Fast track your search: just CTRL+V your image for quick results.
+            </p>
           </HoverCardContent>
         </HoverCard>
 
