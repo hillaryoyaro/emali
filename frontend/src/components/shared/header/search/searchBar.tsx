@@ -1,8 +1,7 @@
 
-// components/SearchBar.tsx
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/src/components/ui/input";
 import { SearchIcon, Camera, X } from "lucide-react";
@@ -23,6 +22,7 @@ import { APP_NAME } from "@/src/lib/constants";
 import { getAllCategories } from "@/src/lib/actions/product.actions";
 import Image from "next/image";
 import ImageUpload from "./imageUpload";
+import LoadingOverlay from "../../common/loading-overlay";
 
 interface Suggestion {
   id: string;
@@ -38,27 +38,82 @@ export default function SearchBar() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [imageSearchOpen, setImageSearchOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
-    getAllCategories()
-      .then(setCategories)
-      .catch(() => {});
+    getAllCategories().then(setCategories).catch(() => {});
   }, []);
+
+  // 🔎 Handle search (text + image)
+  const handleSearch = useCallback(
+    async (e?: React.FormEvent<HTMLFormElement>) => {
+      if (e) e.preventDefault();
+
+      // 🖼 Image search
+      if (image) {
+        setLoading(true);
+        setImageSearchOpen(false);
+        try {
+          const fd = new FormData();
+          fd.append("file", image);
+
+          const imgRes = await fetch("/api/products/image-search", {
+            method: "POST",
+            body: fd,
+          });
+
+          if (imgRes.ok) {
+            const imgData = await imgRes.json();
+            if (imgData?.results?.length > 0) {
+              sessionStorage.setItem("searchResults", JSON.stringify(imgData));
+              router.push("/search?image=true");
+            } else {
+              router.push("/not-found");
+            }
+          } else {
+            router.push("/not-found");
+          }
+        } catch (err) {
+          console.error("Image search failed", err);
+          router.push("/not-found");
+        } finally {
+          setLoading(false);
+          setImage(null);
+        }
+        return;
+      }
+
+      // 🔤 Text search
+      const params = new URLSearchParams();
+      if (query.trim()) params.set("q", query);
+      if (category !== "all") params.set("category", category);
+
+      router.push(`/search?${params.toString()}`);
+    },
+    [image, query, category, router]
+  );
+
+  // 👀 Watch for image uploads → auto trigger search
+  useEffect(() => {
+    if (!image) return;
+    handleSearch();
+  }, [image, handleSearch]);
 
   // 🔎 Fetch suggestions
   useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (query.length < 2) {
-        setSuggestions([]);
-        return;
-      }
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const debounce = setTimeout(async () => {
       try {
         const res = await fetch(
-          `/api/products/text-search?mode=suggestions&q=${query}&limit=5`
+          `/api/products/text-search?mode=suggestions&q=${query}&limit=10`
         );
         if (res.ok) {
           const data = await res.json();
@@ -68,36 +123,10 @@ export default function SearchBar() {
       } catch (err) {
         console.error("Failed to fetch suggestions", err);
       }
-    };
+    }, 300);
 
-    const debounce = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(debounce);
   }, [query]);
-
-  const handleSearch = async (e?: React.FormEvent<HTMLFormElement>) => {
-    if (e) e.preventDefault();
-
-    if (image) {
-      const fd = new FormData();
-      fd.append("file", image);
-      const imgRes = await fetch("/api/products/image-search", {
-        method: "POST",
-        body: fd,
-      });
-      if (imgRes.ok) {
-        const imgData = await imgRes.json();
-        sessionStorage.setItem("searchResults", JSON.stringify(imgData));
-        router.push("/search?image=true");
-      }
-      return;
-    }
-
-    const params = new URLSearchParams();
-    if (query.trim()) params.set("q", query);
-    if (category !== "all") params.set("category", category);
-
-    router.push(`/search?${params.toString()}`);
-  };
 
   // 🔑 Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -139,142 +168,142 @@ export default function SearchBar() {
         setSuggestions([]);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <div className="relative w-full">
-      <form
-        onSubmit={handleSearch}
-        className="flex items-stretch h-10 space-x-1"
-      >
-        {/* Category select */}
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="w-auto h-full bg-gray-100 text-black border-r rounded-l-md">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent position="popper">
-            <SelectItem value="all">All</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <>
+      <LoadingOverlay show={loading} text="Searching..." />
 
-        {/* Text field */}
-        <div className="relative flex-1">
-          <Input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="w-full rounded-none bg-gray-100 text-black text-base h-full pr-10"
-            placeholder={`Search ${APP_NAME}`}
-          />
-
-          {/* ❌ Clear button for text */}
-          {query && (
-            <button
-              type="button"
-              onClick={() => {
-                setQuery("");
-                setSuggestions([]);
-                inputRef.current?.focus();
-              }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
-
-          {/* 🔽 Suggestions dropdown */}
-          {suggestions.length > 0 && (
-            <ul
-              ref={dropdownRef}
-              className="absolute z-50 bg-white text-black border rounded-md shadow-md
-                max-h-80 overflow-y-auto 
-                left-0 right-0 w-[90vw] max-w-3xl mx-auto 
-                top-[calc(100%+12px)]"
-            >
-              {suggestions.map((s, i) => (
-                <li
-                  key={s.id}
-                  className={`flex items-center gap-3 px-3 py-3 cursor-pointer text-base ${
-                    i === activeIndex
-                      ? "bg-gray-100"
-                      : "hover:bg-green-500 hover:text-white"
-                  }`}
-                  onClick={() => {
-                    setSuggestions([]);
-                    router.push(`/search?q=${encodeURIComponent(s.name)}`);
-                  }}
-                >
-                  <SearchIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                  <span className="flex-1">{s.name}</span>
-                  {s.image && (
-                    <Image
-                      src={s.image}
-                      alt={s.name}
-                      width={40}
-                      height={40}
-                      className="w-10 h-10 object-cover rounded-md border flex-shrink-0"
-                    />
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Sticky HoverCard for Image Search */}
-        <HoverCard open={imageSearchOpen} onOpenChange={setImageSearchOpen}>
-          <HoverCardTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="bg-gray-200 h-full"
-              onClick={() => setImageSearchOpen(!imageSearchOpen)}
-            >
-              <Camera className="w-5 h-5 text-gray-600" />
-            </Button>
-          </HoverCardTrigger>
-          <HoverCardContent className="relative w-80">
-            {/* ❌ Close button for card */}
-            <button
-              type="button"
-              onClick={() => setImageSearchOpen(false)}
-              className="absolute right-2 top-2 text-gray-500 hover:text-black"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h3 className="font-semibold text-sm mb-2">Search By Image</h3>
-            <p className="text-sm mb-2">
-             Search smarter. Shop faster.Turn pictures into products instantly with EmaliExpress.
-            </p>
-            <ImageUpload onFileSelect={setImage} />
-            <p className="text-xs mt-2 text-gray-500">
-              *Fast track your search: just CTRL+V your image for quick results.
-            </p>
-          </HoverCardContent>
-        </HoverCard>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          aria-label="Search"
-          className="bg-primary text-black rounded-r-md h-full px-3 py-2"
+      <div className="relative w-full">
+        <form
+          onSubmit={handleSearch}
+          className="flex items-stretch h-10 space-x-1"
         >
-          <SearchIcon className="w-6 h-6" />
-        </button>
-      </form>
-    </div>
+          {/* Category select */}
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="w-auto h-full bg-gray-100 text-black border-r rounded-l-md">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="all">All</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Text field */}
+          <div className="relative flex-1">
+            <Input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-full rounded-none bg-gray-100 text-black text-base h-full pr-10"
+              placeholder={`Search ${APP_NAME}`}
+            />
+
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setSuggestions([]);
+                  inputRef.current?.focus();
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+
+            {suggestions.length > 0 && (
+              <ul
+                ref={dropdownRef}
+                className="absolute z-50 bg-white text-black border rounded-md shadow-md max-h-80 overflow-y-auto left-0 right-0 w-[90vw] max-w-3xl mx-auto top-[calc(100%+12px)]"
+              >
+                {suggestions.map((s, i) => (
+                  <li
+                    key={s.id}
+                    className={`flex items-center gap-3 px-3 py-3 cursor-pointer text-base ${
+                      i === activeIndex
+                        ? "bg-gray-100"
+                        : "hover:bg-green-500 hover:text-white"
+                    }`}
+                    onClick={() => {
+                      setSuggestions([]);
+                      router.push(`/search?q=${encodeURIComponent(s.name)}`);
+                    }}
+                  >
+                    <SearchIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <span className="flex-1">{s.name}</span>
+                    {s.image && (
+                      <Image
+                        src={s.image}
+                        alt={s.name}
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 object-cover rounded-md border flex-shrink-0"
+                      />
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Image search */}
+          <HoverCard open={imageSearchOpen} onOpenChange={setImageSearchOpen}>
+            <HoverCardTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="bg-gray-200 h-full"
+              >
+                <Camera className="w-5 h-5 text-gray-600" />
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="relative w-80">
+              <button
+                type="button"
+                onClick={() => setImageSearchOpen(false)}
+                className="absolute right-2 top-2 text-gray-500 hover:text-black"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <h3 className="font-semibold text-sm mb-2">Search By Image</h3>
+              <p className="text-sm mb-2">
+                Search smarter. Shop faster. Turn pictures into products
+                instantly with {APP_NAME}.
+              </p>
+              <ImageUpload
+                onFileSelect={(file) => {
+                  setImage(file);
+                }}
+              />
+              <p className="text-xs mt-2 text-gray-500">
+                *Fast track your search: just CTRL+V your image for quick
+                results.
+              </p>
+            </HoverCardContent>
+          </HoverCard>
+
+          <button
+            type="submit"
+            aria-label="Search"
+            className="bg-primary text-black rounded-r-md h-full px-3 py-2"
+          >
+            <SearchIcon className="w-6 h-6" />
+          </button>
+        </form>
+      </div>
+    </>
   );
 }
 

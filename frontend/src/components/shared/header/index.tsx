@@ -13,6 +13,7 @@ import { getAllCategories } from '@/src/lib/actions/product.actions'
 
 
 
+
 export default async function Header() {
   const categories = await getAllCategories()
   return (
