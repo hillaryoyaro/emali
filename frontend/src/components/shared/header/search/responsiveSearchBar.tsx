@@ -2,8 +2,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import SearchBarMobile from "./searchBarMobile";
+
 import SearchBarDesktop from "./searchBarDesktop";
+import SearchBarMobile from "./searchBarMobile";
 
 
 export default function ResponsiveSearchBar() {
