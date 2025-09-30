@@ -101,3 +101,29 @@ export interface GetProductsByTextSearchParams {
 }
 
 
+// ✅ DRY helper to handle image search through API route
+export async function getImageSearchResults(): Promise<IProduct[]> {
+  try {
+    if (typeof window === "undefined") return []
+
+    const stored = localStorage.getItem("lastUploadedImage")
+    if (!stored) return []
+
+    const blob = await (await fetch(stored)).blob()
+    const formData = new FormData()
+    formData.append("image", blob, "upload.png")
+
+    const res = await fetch("/api/products/image-search", {
+      method: "POST",
+      body: formData,
+    })
+
+    localStorage.removeItem("lastUploadedImage")
+
+    if (!res.ok) return []
+    return await res.json()
+  } catch (err) {
+    console.error("Image search error", err)
+    return []
+  }
+}
