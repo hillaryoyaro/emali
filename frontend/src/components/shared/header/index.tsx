@@ -26,9 +26,9 @@ export default async function Header() {
               className='flex items-center header-button font-extrabold text-2xl m-1 '
             >
               <Image
-                src='/icons/logo.svg'
-                width={100}
-                height={100}
+                src='/icons/logo.JPEG'
+                width={80}
+                height={80}
                 alt={`${APP_NAME} logo`}
               />
              
