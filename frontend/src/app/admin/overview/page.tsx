@@ -1,9 +1,11 @@
+import { APP_NAME } from '@/src/lib/constants'  
 import { Metadata } from 'next'
+
 
 import OverviewReport from './overview-report'
 import { auth } from '@/auth'
 export const metadata: Metadata = {
-  title: 'Admin Dashboard',
+  title: `Admin Dashboard - ${APP_NAME}`,
 }
 const DashboardPage = async () => {
   const session = await auth()
